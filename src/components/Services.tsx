@@ -1,5 +1,6 @@
 
 import { Building, Wrench, Zap, Shield, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Services = () => {
   const services = [
@@ -7,26 +8,31 @@ const Services = () => {
       icon: Building,
       title: 'Less Construction',
       description: 'Minimalist construction solutions that focus on essential elements, clean lines, and purposeful design.',
+      link: '/construction',
     },
     {
       icon: Wrench,
       title: 'Less Plumbing',
       description: 'Streamlined plumbing systems with efficient, hidden infrastructure that prioritizes functionality.',
+      link: '/plumbing',
     },
     {
       icon: Zap,
       title: 'Less Electrical',
       description: 'Clean electrical installations with minimal visual impact and maximum efficiency.',
+      link: '/electrical',
     },
     {
       icon: Shield,
       title: 'Less Security',
       description: 'Discreet security solutions that protect without cluttering your space.',
+      link: '/security',
     },
     {
       icon: Sparkles,
       title: 'Less Cleaning',
       description: 'Thorough cleaning services that maintain pristine spaces with minimal disruption.',
+      link: '/cleaning',
     },
   ];
 
@@ -45,9 +51,10 @@ const Services = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service, index) => (
-            <div
+            <Link
               key={service.title}
-              className="group p-8 border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-lg"
+              to={service.link}
+              className="group p-8 border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-lg block"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="mb-6">
@@ -64,7 +71,7 @@ const Services = () => {
               <p className="text-gray-600 font-light leading-relaxed">
                 {service.description}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
