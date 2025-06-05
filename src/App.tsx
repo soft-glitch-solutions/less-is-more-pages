@@ -12,6 +12,8 @@ import SecurityPage from "./pages/SecurityPage";
 import CleaningPage from "./pages/CleaningPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

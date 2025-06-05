@@ -65,6 +65,11 @@ const Footer = () => {
                   Privacy Policy
                 </Link>
               </li>
+              <li>
+                <Link to="/admin" className="hover:text-white transition-colors">
+                  Admin Portal
+                </Link>
+              </li>
             </ul>
 
             {/* Social Media */}
@@ -113,9 +118,10 @@ const Footer = () => {
 
         {/* Bottom Border */}
         <div className="border-t border-gray-700 pt-8">
-          <p className="text-center text-gray-400 font-light">
-            © 2024 The Less Company. All rights reserved.
-          </p>
+          <div className="text-center text-gray-400 font-light space-y-2">
+            <p>© 2024 The Less Company. All rights reserved.</p>
+            <p className="text-sm">Website developed by Soft Glitch Solutions</p>
+          </div>
         </div>
       </div>
     </footer>
