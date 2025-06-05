@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Eye, Edit, Send } from 'lucide-react';
+import { Eye, Edit, Send, Trash2 } from 'lucide-react';
 
 const QuotesList = () => {
   const [quotes, setQuotes] = useState([
@@ -33,6 +33,52 @@ const QuotesList = () => {
     setQuotes(quotes.map(quote => 
       quote.id === id ? { ...quote, status } : quote
     ));
+  };
+
+  const deleteQuote = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this quote?')) {
+      setQuotes(quotes.filter(quote => quote.id !== id));
+    }
+  };
+
+  const printQuote = (quote: any) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Quote ${quote.quoteNumber}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              .header { text-align: center; margin-bottom: 30px; }
+              .quote-details { margin-bottom: 20px; }
+              .quote-details h2 { margin-bottom: 10px; }
+              .amount { font-size: 24px; font-weight: bold; color: #059669; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>The Less Company</h1>
+              <p>Professional Services Quote</p>
+            </div>
+            <div class="quote-details">
+              <h2>Quote Details</h2>
+              <p><strong>Quote Number:</strong> ${quote.quoteNumber}</p>
+              <p><strong>Customer:</strong> ${quote.customerName}</p>
+              <p><strong>Service:</strong> ${quote.service}</p>
+              <p><strong>Created:</strong> ${quote.createdAt}</p>
+              <p><strong>Valid Until:</strong> ${quote.validUntil}</p>
+              <p><strong>Status:</strong> ${quote.status}</p>
+              <div class="amount">
+                <p>Total Amount: R${quote.amount.toLocaleString()}</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -94,6 +140,14 @@ const QuotesList = () => {
                       <Button variant="outline" size="sm">
                         <Edit size={14} />
                       </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => printQuote(quote)}
+                        title="Print Quote"
+                      >
+                        <printer size={14} />
+                      </Button>
                       {quote.status === 'Draft' && (
                         <Button 
                           variant="outline" 
@@ -103,6 +157,15 @@ const QuotesList = () => {
                           <Send size={14} />
                         </Button>
                       )}
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => deleteQuote(quote.id)}
+                        className="text-red-600 hover:text-red-800"
+                        title="Delete Quote"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
