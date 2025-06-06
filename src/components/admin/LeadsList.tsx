@@ -1,38 +1,46 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle, XCircle, Clock, Edit, Save, X } from 'lucide-react';
+import { leadDB } from '@/lib/database';
 
 const LeadsList = () => {
-  const [leads, setLeads] = useState([
-    {
-      id: 1,
-      name: 'Mike Wilson',
-      email: 'mike@example.com',
-      phone: '+27 84 555 1234',
-      service: 'Construction',
-      message: 'Need help with home renovation project',
-      status: 'New',
-      submittedAt: '2024-01-16 10:30'
-    },
-    {
-      id: 2,
-      name: 'Lisa Brown',
-      email: 'lisa@example.com',
-      phone: '+27 82 444 5678',
-      service: 'Plumbing',
-      message: 'Urgent plumbing issue in kitchen',
-      status: 'Contacted',
-      submittedAt: '2024-01-15 14:20'
-    }
-  ]);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [editingNotes, setEditingNotes] = useState<number | null>(null);
+  const [notesValue, setNotesValue] = useState('');
+
+  const loadLeads = () => {
+    const data = leadDB.getAll();
+    setLeads(data);
+  };
+
+  useEffect(() => {
+    loadLeads();
+  }, []);
 
   const updateLeadStatus = (id: number, status: string) => {
-    setLeads(leads.map(lead => 
-      lead.id === id ? { ...lead, status } : lead
-    ));
+    leadDB.updateStatus(id, status);
+    loadLeads();
+  };
+
+  const startEditingNotes = (lead: any) => {
+    setEditingNotes(lead.id);
+    setNotesValue(lead.notes || '');
+  };
+
+  const saveNotes = (id: number) => {
+    leadDB.updateNotes(id, notesValue);
+    setEditingNotes(null);
+    setNotesValue('');
+    loadLeads();
+  };
+
+  const cancelEditingNotes = () => {
+    setEditingNotes(null);
+    setNotesValue('');
   };
 
   const getStatusIcon = (status: string) => {
@@ -66,6 +74,7 @@ const LeadsList = () => {
                 <TableHead>Contact</TableHead>
                 <TableHead>Service</TableHead>
                 <TableHead>Message</TableHead>
+                <TableHead>Notes</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Submitted</TableHead>
                 <TableHead>Actions</TableHead>
@@ -84,18 +93,48 @@ const LeadsList = () => {
                   <TableCell>{lead.service}</TableCell>
                   <TableCell className="max-w-xs truncate">{lead.message}</TableCell>
                   <TableCell>
+                    {editingNotes === lead.id ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={notesValue}
+                          onChange={(e) => setNotesValue(e.target.value)}
+                          rows={2}
+                          className="min-w-[200px]"
+                        />
+                        <div className="flex space-x-1">
+                          <Button size="sm" onClick={() => saveNotes(lead.id)}>
+                            <Save size={12} />
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={cancelEditingNotes}>
+                            <X size={12} />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm max-w-xs truncate">
+                          {lead.notes || 'No notes'}
+                        </span>
+                        <Button size="sm" variant="outline" onClick={() => startEditingNotes(lead)}>
+                          <Edit size={12} />
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(lead.status)}
                       <span className="text-sm">{lead.status}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{lead.submittedAt}</TableCell>
+                  <TableCell>{new Date(lead.submitted_at).toLocaleString()}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button 
                         variant="outline" 
                         size="sm"
                         onClick={() => updateLeadStatus(lead.id, 'Contacted')}
+                        disabled={lead.status === 'Contacted' || lead.status === 'Converted'}
                       >
                         Contact
                       </Button>
@@ -103,6 +142,7 @@ const LeadsList = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => updateLeadStatus(lead.id, 'Converted')}
+                        disabled={lead.status === 'Converted'}
                       >
                         Convert
                       </Button>

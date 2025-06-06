@@ -1,53 +1,43 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit, Send, Trash2, Printer } from 'lucide-react';
+import { quoteDB } from '@/lib/database';
 
 const QuotesList = () => {
-  const [quotes, setQuotes] = useState([
-    {
-      id: 1,
-      quoteNumber: 'Q-2024-001',
-      customerName: 'John Smith',
-      service: 'Construction',
-      amount: 45000,
-      status: 'Draft',
-      createdAt: '2024-01-16',
-      validUntil: '2024-02-15'
-    },
-    {
-      id: 2,
-      quoteNumber: 'Q-2024-002',
-      customerName: 'Sarah Johnson',
-      service: 'Electrical',
-      amount: 12500,
-      status: 'Sent',
-      createdAt: '2024-01-15',
-      validUntil: '2024-02-14'
-    }
-  ]);
+  const [quotes, setQuotes] = useState<any[]>([]);
+
+  const loadQuotes = () => {
+    const data = quoteDB.getAll();
+    setQuotes(data);
+  };
+
+  useEffect(() => {
+    loadQuotes();
+  }, []);
 
   const updateQuoteStatus = (id: number, status: string) => {
-    setQuotes(quotes.map(quote => 
-      quote.id === id ? { ...quote, status } : quote
-    ));
+    quoteDB.updateStatus(id, status);
+    loadQuotes();
   };
 
   const deleteQuote = (id: number) => {
     if (window.confirm('Are you sure you want to delete this quote?')) {
-      setQuotes(quotes.filter(quote => quote.id !== id));
+      quoteDB.delete(id);
+      loadQuotes();
     }
   };
 
   const printQuote = (quote: any) => {
+    const lineItems = quote.line_items ? JSON.parse(quote.line_items) : [];
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
         <html>
           <head>
-            <title>Quote ${quote.quoteNumber}</title>
+            <title>Quote ${quote.quote_number}</title>
             <style>
               body { 
                 font-family: 'Arial', sans-serif; 
@@ -61,13 +51,13 @@ const QuotesList = () => {
                 justify-content: space-between; 
                 align-items: flex-start; 
                 margin-bottom: 30px; 
-                border-bottom: 3px solid #059669;
+                border-bottom: 3px solid #222;
                 padding-bottom: 20px;
               }
               .company-info h1 { 
                 margin: 0; 
                 font-size: 28px; 
-                color: #059669; 
+                color: #222; 
                 font-weight: bold;
               }
               .company-info p { 
@@ -100,7 +90,7 @@ const QuotesList = () => {
                 background: #f8f9fa;
                 padding: 10px;
                 margin: 0 0 15px 0;
-                border-left: 4px solid #059669;
+                border-left: 4px solid #222;
                 font-size: 16px;
                 font-weight: bold;
               }
@@ -124,7 +114,7 @@ const QuotesList = () => {
                 text-align: left;
               }
               .services-table th {
-                background: #059669;
+                background: #222;
                 color: white;
                 font-weight: bold;
               }
@@ -137,7 +127,7 @@ const QuotesList = () => {
                 font-size: 18px;
               }
               .total-amount {
-                background: #059669;
+                background: #222;
                 color: white;
                 padding: 15px;
                 font-size: 24px;
@@ -183,15 +173,15 @@ const QuotesList = () => {
               <div class="company-info">
                 <h1>THE LESS COMPANY</h1>
                 <p><strong>Professional Construction & Services</strong></p>
-                <p>📧 hello@thelesscompany.co.za</p>
-                <p>📞 +27 21 123 4567</p>
-                <p>📍 123 Cape Town Street, Cape Town, 8001, South Africa</p>
+                <p>Email: hello@thelesscompany.co.za</p>
+                <p>Phone: +27 21 123 4567</p>
+                <p>Address: 123 Cape Town Street, Cape Town, 8001, South Africa</p>
                 <p><strong>VAT No:</strong> 4123456789</p>
                 <p><strong>Company Reg:</strong> 2024/123456/07</p>
               </div>
               <div>
                 <h2 class="quote-title">QUOTATION</h2>
-                <p class="quote-number">Quote No: ${quote.quoteNumber}</p>
+                <p class="quote-number">Quote No: ${quote.quote_number}</p>
                 <p class="quote-number">Date: ${new Date().toLocaleDateString('en-ZA')}</p>
               </div>
             </div>
@@ -201,7 +191,7 @@ const QuotesList = () => {
                 <h3>CUSTOMER DETAILS</h3>
                 <div class="detail-row">
                   <span class="detail-label">Name:</span>
-                  <span>${quote.customerName}</span>
+                  <span>${quote.customer_name}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Service:</span>
@@ -213,7 +203,7 @@ const QuotesList = () => {
                 <h3>QUOTE DETAILS</h3>
                 <div class="detail-row">
                   <span class="detail-label">Valid Until:</span>
-                  <span>${new Date(quote.validUntil).toLocaleDateString('en-ZA')}</span>
+                  <span>${new Date(quote.valid_until).toLocaleDateString('en-ZA')}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Status:</span>
@@ -221,7 +211,7 @@ const QuotesList = () => {
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Created:</span>
-                  <span>${new Date(quote.createdAt).toLocaleDateString('en-ZA')}</span>
+                  <span>${new Date(quote.created_at).toLocaleDateString('en-ZA')}</span>
                 </div>
               </div>
             </div>
@@ -230,16 +220,20 @@ const QuotesList = () => {
               <thead>
                 <tr>
                   <th>Description</th>
-                  <th>Service Type</th>
+                  <th>Quantity</th>
+                  <th>Rate (ZAR)</th>
                   <th style="text-align: right;">Amount (ZAR)</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>${quote.service} Services</td>
-                  <td>${quote.service}</td>
-                  <td style="text-align: right;">R ${quote.amount.toLocaleString()}</td>
-                </tr>
+                ${lineItems.map((item: any) => `
+                  <tr>
+                    <td>${item.description}</td>
+                    <td>${item.quantity}</td>
+                    <td>R ${item.rate.toLocaleString()}</td>
+                    <td style="text-align: right;">R ${item.amount.toLocaleString()}</td>
+                  </tr>
+                `).join('')}
               </tbody>
             </table>
 
@@ -326,8 +320,8 @@ const QuotesList = () => {
             <TableBody>
               {quotes.map((quote) => (
                 <TableRow key={quote.id}>
-                  <TableCell className="font-medium">{quote.quoteNumber}</TableCell>
-                  <TableCell>{quote.customerName}</TableCell>
+                  <TableCell className="font-medium">{quote.quote_number}</TableCell>
+                  <TableCell>{quote.customer_name}</TableCell>
                   <TableCell>{quote.service}</TableCell>
                   <TableCell>R{quote.amount.toLocaleString()}</TableCell>
                   <TableCell>
@@ -335,8 +329,8 @@ const QuotesList = () => {
                       {quote.status}
                     </span>
                   </TableCell>
-                  <TableCell>{quote.createdAt}</TableCell>
-                  <TableCell>{quote.validUntil}</TableCell>
+                  <TableCell>{new Date(quote.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(quote.valid_until).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button variant="outline" size="sm">

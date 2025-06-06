@@ -10,12 +10,15 @@ import LeadsList from '@/components/admin/LeadsList';
 import QuotesList from '@/components/admin/QuotesList';
 import CreateCustomer from '@/components/admin/CreateCustomer';
 import CreateQuote from '@/components/admin/CreateQuote';
+import CreateLead from '@/components/admin/CreateLead';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showCreateCustomer, setShowCreateCustomer] = useState(false);
   const [showCreateQuote, setShowCreateQuote] = useState(false);
+  const [showCreateLead, setShowCreateLead] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -27,6 +30,10 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     navigate('/admin');
+  };
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -113,17 +120,30 @@ const AdminDashboard = () => {
                 Add Customer
               </Button>
             </div>
-            <CustomerList />
+            <CustomerList key={`customers-${refreshKey}`} />
             {showCreateCustomer && (
-              <CreateCustomer onClose={() => setShowCreateCustomer(false)} />
+              <CreateCustomer 
+                onClose={() => setShowCreateCustomer(false)} 
+                onCustomerCreated={handleRefresh}
+              />
             )}
           </TabsContent>
 
           <TabsContent value="leads" className="mt-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-light">Lead Management</h2>
+              <Button onClick={() => setShowCreateLead(true)} className="flex items-center gap-2">
+                <Plus size={16} />
+                Add Lead
+              </Button>
             </div>
-            <LeadsList />
+            <LeadsList key={`leads-${refreshKey}`} />
+            {showCreateLead && (
+              <CreateLead 
+                onClose={() => setShowCreateLead(false)} 
+                onLeadCreated={handleRefresh}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="quotes" className="mt-6">
@@ -134,9 +154,12 @@ const AdminDashboard = () => {
                 Create Quote
               </Button>
             </div>
-            <QuotesList />
+            <QuotesList key={`quotes-${refreshKey}`} />
             {showCreateQuote && (
-              <CreateQuote onClose={() => setShowCreateQuote(false)} />
+              <CreateQuote 
+                onClose={() => setShowCreateQuote(false)} 
+                onQuoteCreated={handleRefresh}
+              />
             )}
           </TabsContent>
         </Tabs>

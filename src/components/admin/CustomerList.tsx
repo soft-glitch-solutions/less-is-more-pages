@@ -1,34 +1,28 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Eye } from 'lucide-react';
+import { customerDB } from '@/lib/database';
 
 const CustomerList = () => {
-  const [customers, setCustomers] = useState([
-    {
-      id: 1,
-      name: 'John Smith',
-      email: 'john@example.com',
-      phone: '+27 82 123 4567',
-      company: 'ABC Corp',
-      status: 'Active',
-      createdAt: '2024-01-15'
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      phone: '+27 83 987 6543',
-      company: 'XYZ Ltd',
-      status: 'Active',
-      createdAt: '2024-01-10'
-    }
-  ]);
+  const [customers, setCustomers] = useState<any[]>([]);
+
+  const loadCustomers = () => {
+    const data = customerDB.getAll();
+    setCustomers(data);
+  };
+
+  useEffect(() => {
+    loadCustomers();
+  }, []);
 
   const handleDelete = (id: number) => {
-    setCustomers(customers.filter(customer => customer.id !== id));
+    if (window.confirm('Are you sure you want to delete this customer?')) {
+      customerDB.delete(id);
+      loadCustomers();
+    }
   };
 
   return (
@@ -64,7 +58,7 @@ const CustomerList = () => {
                       {customer.status}
                     </span>
                   </TableCell>
-                  <TableCell>{customer.createdAt}</TableCell>
+                  <TableCell>{new Date(customer.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button variant="outline" size="sm">

@@ -7,9 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { quoteDB } from '@/lib/database';
 
 interface CreateQuoteProps {
   onClose: () => void;
+  onQuoteCreated: () => void;
 }
 
 interface LineItem {
@@ -20,7 +22,7 @@ interface LineItem {
   amount: number;
 }
 
-const CreateQuote = ({ onClose }: CreateQuoteProps) => {
+const CreateQuote = ({ onClose, onQuoteCreated }: CreateQuoteProps) => {
   const [formData, setFormData] = useState({
     customerName: '',
     service: '',
@@ -66,7 +68,18 @@ const CreateQuote = ({ onClose }: CreateQuoteProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Creating quote:', { formData, lineItems, totalAmount });
+    
+    const quoteData = {
+      customerName: formData.customerName,
+      service: formData.service,
+      amount: totalAmount,
+      lineItems: lineItems,
+      notes: formData.notes,
+      validUntil: formData.validUntil
+    };
+
+    quoteDB.create(quoteData);
+    onQuoteCreated();
     onClose();
   };
 
