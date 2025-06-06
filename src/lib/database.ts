@@ -1,83 +1,180 @@
 
-import Database from 'better-sqlite3';
+// Browser-compatible database using localStorage
+interface Customer {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  address?: string;
+  notes?: string;
+  status: string;
+  created_at: string;
+}
 
-// Initialize SQLite database
-const db = new Database('crm.db');
+interface Lead {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  service: string;
+  message?: string;
+  notes?: string;
+  status: string;
+  submitted_at: string;
+}
 
-// Initialize tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS customers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    phone TEXT,
-    company TEXT,
-    address TEXT,
-    notes TEXT,
-    status TEXT DEFAULT 'Active',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+interface Quote {
+  id: number;
+  quote_number: string;
+  customer_name: string;
+  service: string;
+  amount: number;
+  line_items: any[];
+  notes?: string;
+  status: string;
+  valid_until: string;
+  created_at: string;
+}
 
-  CREATE TABLE IF NOT EXISTS leads (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    phone TEXT,
-    service TEXT NOT NULL,
-    message TEXT,
-    notes TEXT,
-    status TEXT DEFAULT 'New',
-    submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+// Helper functions for localStorage operations
+const getStorageData = <T>(key: string): T[] => {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error(`Error reading ${key} from localStorage:`, error);
+    return [];
+  }
+};
 
-  CREATE TABLE IF NOT EXISTS quotes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    quote_number TEXT NOT NULL UNIQUE,
-    customer_name TEXT NOT NULL,
-    service TEXT NOT NULL,
-    amount REAL NOT NULL,
-    line_items TEXT, -- JSON string
-    notes TEXT,
-    status TEXT DEFAULT 'Draft',
-    valid_until TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-`);
+const setStorageData = <T>(key: string, data: T[]): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error(`Error writing ${key} to localStorage:`, error);
+  }
+};
+
+const generateId = (items: any[]): number => {
+  return items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
+};
 
 // Customer operations
 export const customerDB = {
-  getAll: () => db.prepare('SELECT * FROM customers ORDER BY created_at DESC').all(),
-  create: (customer: any) => db.prepare(`
-    INSERT INTO customers (name, email, phone, company, address, notes)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(customer.name, customer.email, customer.phone, customer.company, customer.address, customer.notes),
-  delete: (id: number) => db.prepare('DELETE FROM customers WHERE id = ?').run(id)
+  getAll: (): Customer[] => {
+    return getStorageData<Customer>('customers').sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  },
+  
+  create: (customer: Omit<Customer, 'id' | 'status' | 'created_at'>): void => {
+    const customers = getStorageData<Customer>('customers');
+    const newCustomer: Customer = {
+      ...customer,
+      id: generateId(customers),
+      status: 'Active',
+      created_at: new Date().toISOString()
+    };
+    customers.push(newCustomer);
+    setStorageData('customers', customers);
+  },
+  
+  delete: (id: number): void => {
+    const customers = getStorageData<Customer>('customers');
+    const filtered = customers.filter(customer => customer.id !== id);
+    setStorageData('customers', filtered);
+  }
 };
 
 // Lead operations
 export const leadDB = {
-  getAll: () => db.prepare('SELECT * FROM leads ORDER BY submitted_at DESC').all(),
-  create: (lead: any) => db.prepare(`
-    INSERT INTO leads (name, email, phone, service, message, notes)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(lead.name, lead.email, lead.phone, lead.service, lead.message, lead.notes || ''),
-  updateStatus: (id: number, status: string) => db.prepare('UPDATE leads SET status = ? WHERE id = ?').run(status, id),
-  updateNotes: (id: number, notes: string) => db.prepare('UPDATE leads SET notes = ? WHERE id = ?').run(notes, id),
-  delete: (id: number) => db.prepare('DELETE FROM leads WHERE id = ?').run(id)
+  getAll: (): Lead[] => {
+    return getStorageData<Lead>('leads').sort((a, b) => 
+      new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
+    );
+  },
+  
+  create: (lead: Omit<Lead, 'id' | 'status' | 'submitted_at'>): void => {
+    const leads = getStorageData<Lead>('leads');
+    const newLead: Lead = {
+      ...lead,
+      id: generateId(leads),
+      status: 'New',
+      submitted_at: new Date().toISOString()
+    };
+    leads.push(newLead);
+    setStorageData('leads', leads);
+  },
+  
+  updateStatus: (id: number, status: string): void => {
+    const leads = getStorageData<Lead>('leads');
+    const updated = leads.map(lead => 
+      lead.id === id ? { ...lead, status } : lead
+    );
+    setStorageData('leads', updated);
+  },
+  
+  updateNotes: (id: number, notes: string): void => {
+    const leads = getStorageData<Lead>('leads');
+    const updated = leads.map(lead => 
+      lead.id === id ? { ...lead, notes } : lead
+    );
+    setStorageData('leads', updated);
+  },
+  
+  delete: (id: number): void => {
+    const leads = getStorageData<Lead>('leads');
+    const filtered = leads.filter(lead => lead.id !== id);
+    setStorageData('leads', filtered);
+  }
 };
 
 // Quote operations
 export const quoteDB = {
-  getAll: () => db.prepare('SELECT * FROM quotes ORDER BY created_at DESC').all(),
-  create: (quote: any) => {
-    const quoteNumber = `Q-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
-    return db.prepare(`
-      INSERT INTO quotes (quote_number, customer_name, service, amount, line_items, notes, valid_until)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(quoteNumber, quote.customerName, quote.service, quote.amount, JSON.stringify(quote.lineItems), quote.notes, quote.validUntil);
+  getAll: (): Quote[] => {
+    return getStorageData<Quote>('quotes').sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   },
-  updateStatus: (id: number, status: string) => db.prepare('UPDATE quotes SET status = ? WHERE id = ?').run(status, id),
-  delete: (id: number) => db.prepare('DELETE FROM quotes WHERE id = ?').run(id)
+  
+  create: (quote: Omit<Quote, 'id' | 'quote_number' | 'status' | 'created_at'>): { lastInsertRowid: number } => {
+    const quotes = getStorageData<Quote>('quotes');
+    const quoteNumber = `Q-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+    const newQuote: Quote = {
+      ...quote,
+      id: generateId(quotes),
+      quote_number: quoteNumber,
+      status: 'Draft',
+      created_at: new Date().toISOString()
+    };
+    quotes.push(newQuote);
+    setStorageData('quotes', quotes);
+    return { lastInsertRowid: newQuote.id };
+  },
+  
+  updateStatus: (id: number, status: string): void => {
+    const quotes = getStorageData<Quote>('quotes');
+    const updated = quotes.map(quote => 
+      quote.id === id ? { ...quote, status } : quote
+    );
+    setStorageData('quotes', updated);
+  },
+  
+  delete: (id: number): void => {
+    const quotes = getStorageData<Quote>('quotes');
+    const filtered = quotes.filter(quote => quote.id !== id);
+    setStorageData('quotes', filtered);
+  }
 };
 
-export default db;
+// Initialize with sample data if storage is empty
+const initializeSampleData = () => {
+  if (getStorageData('customers').length === 0) {
+    // Add some sample data for demonstration
+    console.log('Initializing sample data...');
+  }
+};
+
+// Initialize on module load
+initializeSampleData();
