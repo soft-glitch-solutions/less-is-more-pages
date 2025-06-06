@@ -1,5 +1,5 @@
 
-import { Building, Wrench, Zap, Shield, Sparkles, Calculator, Clock } from 'lucide-react';
+import { Building, Wrench, Zap, Shield, Sparkles, Calculator, Clock, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Services = () => {
@@ -33,6 +33,12 @@ const Services = () => {
       title: 'Less Cleaning',
       description: 'Thorough cleaning services that maintain pristine spaces with minimal disruption.',
       link: '/cleaning',
+    },
+    {
+      icon: Home,
+      title: 'Less Properties',
+      description: 'Monthly maintenance plans for landlords. Keep your rental properties in perfect condition with no surprise costs.',
+      link: '/properties',
     },
     {
       icon: Calculator,

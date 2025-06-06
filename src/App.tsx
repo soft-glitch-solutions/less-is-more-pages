@@ -10,6 +10,7 @@ import PlumbingPage from "./pages/PlumbingPage";
 import ElectricalPage from "./pages/ElectricalPage";
 import SecurityPage from "./pages/SecurityPage";
 import CleaningPage from "./pages/CleaningPage";
+import PropertiesPage from "./pages/PropertiesPage";
 import BudgetBuilderPage from "./pages/BudgetBuilderPage";
 import EmergencyServicesPage from "./pages/EmergencyServicesPage";
 import TermsPage from "./pages/TermsPage";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/electrical" element={<ElectricalPage />} />
           <Route path="/security" element={<SecurityPage />} />
           <Route path="/cleaning" element={<CleaningPage />} />
+          <Route path="/properties" element={<PropertiesPage />} />
           <Route path="/budget-builder" element={<BudgetBuilderPage />} />
           <Route path="/emergency-services" element={<EmergencyServicesPage />} />
           <Route path="/terms" element={<TermsPage />} />
