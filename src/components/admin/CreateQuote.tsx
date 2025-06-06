@@ -1,10 +1,8 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { quoteDB } from '@/lib/database';
@@ -15,72 +13,82 @@ interface CreateQuoteProps {
 }
 
 interface LineItem {
-  id: number;
   description: string;
   quantity: number;
-  rate: number;
-  amount: number;
+  unitPrice: number;
+  total: number;
 }
 
 const CreateQuote = ({ onClose, onQuoteCreated }: CreateQuoteProps) => {
   const [formData, setFormData] = useState({
-    customerName: '',
+    customer_name: '',
     service: '',
-    validUntil: '',
-    notes: ''
+    amount: 0,
+    line_items: [] as LineItem[],
+    notes: '',
+    valid_until: ''
   });
 
-  const [lineItems, setLineItems] = useState<LineItem[]>([
-    { id: 1, description: '', quantity: 1, rate: 0, amount: 0 }
-  ]);
-
-  const services = [
-    'Construction',
-    'Plumbing',
-    'Electrical',
-    'Security',
-    'Cleaning'
-  ];
-
-  const addLineItem = () => {
-    const newId = Math.max(...lineItems.map(item => item.id)) + 1;
-    setLineItems([...lineItems, { id: newId, description: '', quantity: 1, rate: 0, amount: 0 }]);
-  };
-
-  const removeLineItem = (id: number) => {
-    setLineItems(lineItems.filter(item => item.id !== id));
-  };
-
-  const updateLineItem = (id: number, field: keyof LineItem, value: string | number) => {
-    setLineItems(lineItems.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        if (field === 'quantity' || field === 'rate') {
-          updatedItem.amount = updatedItem.quantity * updatedItem.rate;
-        }
-        return updatedItem;
-      }
-      return item;
-    }));
-  };
-
-  const totalAmount = lineItems.reduce((sum, item) => sum + item.amount, 0);
+  const [newLineItem, setNewLineItem] = useState({
+    description: '',
+    quantity: 1,
+    unitPrice: 0,
+    total: 0
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const quoteData = {
-      customerName: formData.customerName,
-      service: formData.service,
-      amount: totalAmount,
-      lineItems: lineItems,
-      notes: formData.notes,
-      validUntil: formData.validUntil
-    };
-
-    quoteDB.create(quoteData);
+    const totalAmount = formData.line_items.reduce((sum, item) => sum + item.total, 0);
+    quoteDB.create({
+      ...formData,
+      amount: totalAmount
+    });
     onQuoteCreated();
     onClose();
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleLineItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const updatedItem = {
+      ...newLineItem,
+      [name]: name === 'quantity' || name === 'unitPrice' ? parseFloat(value) || 0 : value
+    };
+    
+    if (name === 'quantity' || name === 'unitPrice') {
+      updatedItem.total = updatedItem.quantity * updatedItem.unitPrice;
+    }
+    
+    setNewLineItem(updatedItem);
+  };
+
+  const addLineItem = () => {
+    if (newLineItem.description && newLineItem.quantity > 0 && newLineItem.unitPrice > 0) {
+      setFormData({
+        ...formData,
+        line_items: [...formData.line_items, newLineItem]
+      });
+      setNewLineItem({
+        description: '',
+        quantity: 1,
+        unitPrice: 0,
+        total: 0
+      });
+    }
+  };
+
+  const removeLineItem = (index: number) => {
+    const updatedItems = formData.line_items.filter((_, i) => i !== index);
+    setFormData({
+      ...formData,
+      line_items: updatedItems
+    });
   };
 
   return (
@@ -94,121 +102,122 @@ const CreateQuote = ({ onClose, onQuoteCreated }: CreateQuoteProps) => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Quote Details */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="customerName">Customer Name *</Label>
+                <Label htmlFor="customer_name">Customer Name *</Label>
                 <Input
-                  id="customerName"
-                  value={formData.customerName}
-                  onChange={(e) => setFormData({...formData, customerName: e.target.value})}
+                  id="customer_name"
+                  name="customer_name"
+                  value={formData.customer_name}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div>
                 <Label htmlFor="service">Service *</Label>
-                <Select onValueChange={(value) => setFormData({...formData, service: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select service" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {services.map(service => (
-                      <SelectItem key={service} value={service}>{service}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  id="service"
+                  name="service"
+                  value={formData.service}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Select a service</option>
+                  <option value="Less Construction">Less Construction</option>
+                  <option value="Less Plumbing">Less Plumbing</option>
+                  <option value="Less Electrical">Less Electrical</option>
+                  <option value="Less Security">Less Security</option>
+                  <option value="Less Cleaning">Less Cleaning</option>
+                </select>
               </div>
               <div>
-                <Label htmlFor="validUntil">Valid Until *</Label>
+                <Label htmlFor="valid_until">Valid Until *</Label>
                 <Input
-                  id="validUntil"
+                  id="valid_until"
+                  name="valid_until"
                   type="date"
-                  value={formData.validUntil}
-                  onChange={(e) => setFormData({...formData, validUntil: e.target.value})}
+                  value={formData.valid_until}
+                  onChange={handleChange}
                   required
                 />
               </div>
             </div>
 
-            {/* Line Items */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <Label className="text-lg">Line Items</Label>
-                <Button type="button" onClick={addLineItem} variant="outline" size="sm">
-                  <Plus size={16} className="mr-2" />
-                  Add Item
+            {/* Line Items Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Quote Items</h3>
+              
+              {/* Add New Line Item */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-2 p-4 border rounded-lg bg-gray-50">
+                <Input
+                  placeholder="Description"
+                  name="description"
+                  value={newLineItem.description}
+                  onChange={handleLineItemChange}
+                />
+                <Input
+                  type="number"
+                  placeholder="Qty"
+                  name="quantity"
+                  value={newLineItem.quantity}
+                  onChange={handleLineItemChange}
+                  min="1"
+                />
+                <Input
+                  type="number"
+                  placeholder="Unit Price"
+                  name="unitPrice"
+                  value={newLineItem.unitPrice}
+                  onChange={handleLineItemChange}
+                  min="0"
+                  step="0.01"
+                />
+                <Input
+                  type="number"
+                  placeholder="Total"
+                  value={newLineItem.total.toFixed(2)}
+                  readOnly
+                  className="bg-gray-100"
+                />
+                <Button type="button" onClick={addLineItem} className="w-full">
+                  <Plus size={16} />
                 </Button>
               </div>
-              
-              <div className="space-y-3">
-                {lineItems.map((item) => (
-                  <div key={item.id} className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-5">
-                      <Label className="text-xs">Description</Label>
-                      <Input
-                        value={item.description}
-                        onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
-                        placeholder="Item description"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Label className="text-xs">Quantity</Label>
-                      <Input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => updateLineItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                        min="0"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Label className="text-xs">Rate (R)</Label>
-                      <Input
-                        type="number"
-                        value={item.rate}
-                        onChange={(e) => updateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Label className="text-xs">Amount (R)</Label>
-                      <Input
-                        value={item.amount.toFixed(2)}
-                        readOnly
-                        className="bg-gray-50"
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeLineItem(item.id)}
-                        disabled={lineItems.length === 1}
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
 
-              <div className="flex justify-end mt-4 p-4 bg-gray-50 rounded">
-                <div className="text-lg font-semibold">
-                  Total: R{totalAmount.toFixed(2)}
+              {/* Existing Line Items */}
+              {formData.line_items.map((item, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 p-4 border rounded-lg">
+                  <div className="font-medium">{item.description}</div>
+                  <div>{item.quantity}</div>
+                  <div>R{item.unitPrice.toFixed(2)}</div>
+                  <div>R{item.total.toFixed(2)}</div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => removeLineItem(index)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
                 </div>
-              </div>
+              ))}
+
+              {formData.line_items.length > 0 && (
+                <div className="text-right text-lg font-bold">
+                  Total: R{formData.line_items.reduce((sum, item) => sum + item.total, 0).toFixed(2)}
+                </div>
+              )}
             </div>
 
-            {/* Notes */}
             <div>
-              <Label htmlFor="notes">Additional Notes</Label>
+              <Label htmlFor="notes">Notes</Label>
               <Textarea
                 id="notes"
+                name="notes"
                 value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                onChange={handleChange}
                 rows={3}
-                placeholder="Terms, conditions, or additional information..."
               />
             </div>
 

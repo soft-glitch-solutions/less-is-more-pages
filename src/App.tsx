@@ -10,6 +10,8 @@ import PlumbingPage from "./pages/PlumbingPage";
 import ElectricalPage from "./pages/ElectricalPage";
 import SecurityPage from "./pages/SecurityPage";
 import CleaningPage from "./pages/CleaningPage";
+import BudgetBuilderPage from "./pages/BudgetBuilderPage";
+import EmergencyServicesPage from "./pages/EmergencyServicesPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import AdminLogin from "./pages/AdminLogin";
@@ -31,6 +33,8 @@ const App = () => (
           <Route path="/electrical" element={<ElectricalPage />} />
           <Route path="/security" element={<SecurityPage />} />
           <Route path="/cleaning" element={<CleaningPage />} />
+          <Route path="/budget-builder" element={<BudgetBuilderPage />} />
+          <Route path="/emergency-services" element={<EmergencyServicesPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/admin" element={<AdminLogin />} />
