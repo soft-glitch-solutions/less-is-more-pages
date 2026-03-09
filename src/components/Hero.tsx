@@ -1,5 +1,6 @@
 
 import { ArrowDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -16,18 +17,18 @@ const Hero = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
-            <a
-              href="#services"
+            <Link
+              to="/services"
               className="px-8 py-3 bg-gray-900 text-white font-light hover:bg-gray-800 transition-colors duration-200 min-w-[160px]"
             >
               Our Services
-            </a>
-            <a
-              href="#contact"
+            </Link>
+            <Link
+              to="/contact"
               className="px-8 py-3 border border-gray-300 text-gray-900 font-light hover:border-gray-400 transition-colors duration-200 min-w-[160px]"
             >
               Get in Touch
-            </a>
+            </Link>
           </div>
         </div>
         
