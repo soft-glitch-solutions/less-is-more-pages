@@ -16,6 +16,7 @@ import CleaningPage from "./pages/CleaningPage";
 import PropertiesPage from "./pages/PropertiesPage";
 import BudgetBuilderPage from "./pages/BudgetBuilderPage";
 import EmergencyServicesPage from "./pages/EmergencyServicesPage";
+import BrandingPage from "./pages/BrandingPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import AdminLogin from "./pages/AdminLogin";
